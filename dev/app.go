@@ -94,6 +94,9 @@ func (a *App) Kill(reason string) error {
 			"error", err.Error(),
 		)
 		fmt.Printf("! Error trying to kill %s: %s", a.Name, err)
+	} else {
+		a.pool.remove(a)
+		a.eventAdd("shutdown")
 	}
 	return err
 }
