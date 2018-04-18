@@ -19,7 +19,7 @@ Pow doesn't support rack.hijack and thus not websockets and thus not actioncable
 * Run `puma-dev -install` to configure puma-dev to run in the background on ports 80 and 443 with the domain `.dev`.
   * If you're currently using pow, puma-dev taking control of `.dev` will break it. If you want to just try out puma-dev and leave pow working, pass `-d pdev` on `-install` to use `.pdev` instead.
 
-*NOTE:* if you had pow installed before in the system, please make sure to run
+_NOTE:_ if you had pow installed before in the system, please make sure to run
 pow's uninstall script. Read more details in [the pow manual](http://pow.cx/manual.html#section_1.2).
 
 ### Install on Linux
@@ -35,8 +35,8 @@ Install the dev-tld-resolver (https://github.com/puma/dev-tld-resolver) to make 
 
 There are 2 options to allow puma-dev to listen on port 80 and 443.
 
-1. `sudo setcap CAP\_NET\_BIND\_SERVICE=+eip /path/to/puma-dev`
-2. Use `authbind`.
+1.  `sudo setcap CAP\_NET\_BIND\_SERVICE=+eip /path/to/puma-dev`
+2.  Use `authbind`.
 
 You don't need to bind to port 80/443 to use puma-dev but obviously it makes using the `.dev` domain much nicer.
 
@@ -64,7 +64,7 @@ Run: `sudo puma-dev -cleanup`
 
 If you want puma-dev to run in the background while you're logged in and on a common port, then you'll need to install it.
 
-*NOTE:* If you installed puma-dev v0.2, please run `sudo puma-dev -cleanup` to remove firewall rules that puma-dev no longer uses (and will conflict with puma-dev working)
+_NOTE:_ If you installed puma-dev v0.2, please run `sudo puma-dev -cleanup` to remove firewall rules that puma-dev no longer uses (and will conflict with puma-dev working)
 
 Run `puma-dev -install`.
 
@@ -138,7 +138,7 @@ Puma-dev supports websockets natively but you may need to tell your web framewor
 
 In the case of rails, you need to configure rails to allow all websockets or websocket requests from certain domains. The quickest way is to add `config.action_cable.disable_request_forgery_protection = true` to `config/environments/development.rb`. This will allow all websocket connections while in development.
 
-*Do not use disable_request_forgery_protection in production!*
+_Do not use disable_request_forgery_protection in production!_
 
 Or you can add something like `config.action_cable.allowed_request_origins = /(\.dev$)|^localhost$/` to allow anything under `.dev` as well as `localhost`.
 
@@ -155,9 +155,10 @@ Like pow, puma-dev support serving static files. If an app has a `public` direct
 Puma-dev is starting to evolve a status API that can be used to introspect it and the apps. To access it, send a request with the `Host: puma-dev` and the path `/status`, for example: `curl -H "Host: puma-dev" localhost/status`.
 
 The status includes:
-  * If it is booting, running, or dead
-  * The directory of the app
-  * The last 1024 lines the app output
+
+* If it is booting, running, or dead
+* The directory of the app
+* The last 1024 lines the app output
 
 ## Subcommands
 
@@ -174,3 +175,16 @@ To build puma-dev, follow these steps:
 * Run `$GOPATH/bin/puma-dev` to use your new binary
 
 Puma-dev uses gb (http://getgb.io) to manage dependencies, so if you're working on puma-dev and need to introduce a new dependency, run `gb vendor fetch <package path>` to pull it into `vendor/src`. Then you can use it from within `puma-dev/src`
+
+## Acknowledgements
+
+This fork of the [original repo](https://github.com/puma/puma-dev) includes several forks from other brilliant developers.
+
+Thanks to:
+
+* @krasnoukhov for SIGTERM to shutdown apps (grabbed from @enova's fork)
+* @nonrational for clean shutdown on timout
+* @mlarraz for updating vendored fsnotify/fsevents library (grabbed from @enova's fork)
+* @krasnoukhov for better handling of websocket headers
+* @amasses for last line of log/stdout into error returned to browser on unexpected exit
+* @while1malloc0 for saner env flags handling, abstracted defaults
