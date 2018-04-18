@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -16,11 +17,11 @@ import (
 
 var (
 	fDebug    = flag.Bool("debug", false, "enable debug output")
-	fDomains  = flag.String("d", "dev", "domains to handle, separate with :")
-	fPort     = flag.Int("dns-port", 9253, "port to listen on dns for")
-	fHTTPPort = flag.Int("http-port", 9280, "port to listen on http for")
-	fTLSPort  = flag.Int("https-port", 9283, "port to listen on https for")
-	fDir      = flag.String("dir", "~/.puma-dev", "directory to watch for apps")
+	fDomains  = flag.String("d", DefaultDomains, "domains to handle, separate with :")
+	fPort     = flag.Int("dns-port", DefaultDnsPort, "port to listen on dns for")
+	fHTTPPort = flag.Int("http-port", DefaultHttpPort, "port to listen on http for")
+	fTLSPort  = flag.Int("https-port", DefaultTlsPort, "port to listen on https for")
+	fDir      = flag.String("dir", DefaultDir, "directory to watch for apps")
 	fTimeout  = flag.Duration("timeout", 15*60*time.Second, "how long to let an app idle for")
 	fPow      = flag.Bool("pow", false, "Mimic pow's settings")
 	fLaunch   = flag.Bool("launchd", false, "Use socket from launchd")
@@ -31,13 +32,14 @@ var (
 	fInstall     = flag.Bool("install", false, "Install puma-dev as a user service")
 	fInstallPort = flag.Int("install-port", 80, "Port to run puma-dev on when installed")
 	fInstallTLS  = flag.Int("install-https-port", 443, "Port to run puma-dev for SSL on when installed")
-
-	fCleanup   = flag.Bool("cleanup", false, "Cleanup old system settings")
-	fUninstall = flag.Bool("uninstall", false, "Uninstall puma-dev as a user service")
+	fCleanup     = flag.Bool("cleanup", false, "Cleanup old system settings")
+	fUninstall   = flag.Bool("uninstall", false, "Uninstall puma-dev as a user service")
 )
 
 func main() {
 	flag.Parse()
+
+	parseEnvFlags()
 
 	allCheck()
 
@@ -176,5 +178,64 @@ func main() {
 	err = http.Serve(socketName)
 	if err != nil {
 		log.Fatalf("Error listening: %s", err)
+	}
+}
+
+func parseEnvFlags() {
+	if !*fDebug {
+		envVal := os.Getenv("PUMA_DEV_DEBUG")
+
+		if envVal != "" {
+			*fDebug = true
+		}
+	}
+
+	if *fDomains == DefaultDomains {
+		envVal := os.Getenv("PUMA_DEV_DOMAINS")
+
+		if envVal != "" {
+			*fDomains = envVal
+		}
+	}
+
+	if *fPort == DefaultDnsPort {
+		envVal := os.Getenv("PUMA_DEV_DNS_PORT")
+
+		if envVal != "" {
+			*fPort, _ = strconv.Atoi(envVal)
+		}
+	}
+
+	if *fHTTPPort == DefaultHttpPort {
+		envVal := os.Getenv("PUMA_DEV_HTTP_PORT")
+
+		if envVal != "" {
+			*fHTTPPort, _ = strconv.Atoi(envVal)
+		}
+	}
+
+	if *fTLSPort == DefaultTlsPort {
+		envVal := os.Getenv("PUMA_DEV_HTTPS_PORT")
+
+		if envVal != "" {
+			*fTLSPort, _ = strconv.Atoi(envVal)
+		}
+	}
+
+	if *fDir == DefaultDir {
+		envVal := os.Getenv("PUMA_DEV_DIR")
+
+		if envVal != "" {
+			*fDir = envVal
+		}
+	}
+
+	if *fTimeout == 15*60*time.Second {
+		envVal := os.Getenv("PUMA_DEV_TIMEOUT")
+
+		if envVal != "" {
+			parsedVal, _ := strconv.Atoi(envVal)
+			*fTimeout = time.Duration(parsedVal) * time.Second
+		}
 	}
 }
