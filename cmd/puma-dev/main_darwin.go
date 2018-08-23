@@ -17,7 +17,7 @@ import (
 
 var (
 	fDebug    = flag.Bool("debug", false, "enable debug output")
-	fDomains  = flag.String("d", DefaultDomains, "domains to handle, separate with :")
+	fDomains  = flag.String("d", DefaultDomains, "domains to handle, separate with :, defaults to test")
 	fPort     = flag.Int("dns-port", DefaultDnsPort, "port to listen on dns for")
 	fHTTPPort = flag.Int("http-port", DefaultHttpPort, "port to listen on http for")
 	fTLSPort  = flag.Int("https-port", DefaultTlsPort, "port to listen on https for")

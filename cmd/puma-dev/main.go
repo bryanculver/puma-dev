@@ -12,7 +12,7 @@ var fVersion = flag.Bool("V", false, "display version info")
 var Version = "devel"
 
 const (
-	DefaultDomains  = "dev"
+	DefaultDomains  = "test"
 	DefaultDnsPort  = 9253
 	DefaultHttpPort = 9280
 	DefaultTlsPort  = 9283

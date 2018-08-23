@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -35,7 +36,7 @@ type App struct {
 	Public  bool
 	Events  *Events
 
-	lines linebuffer.LineBuffer
+	lines       linebuffer.LineBuffer
 	lastLogLine string
 
 	address string
@@ -271,6 +272,11 @@ func (pool *AppPool) LaunchApp(name, dir string) (*App, error) {
 
 	shell := os.Getenv("SHELL")
 
+	if shell == "" {
+		fmt.Printf("! SHELL env var not set, using /bin/bash by default")
+		shell = "/bin/bash"
+	}
+
 	cmd := exec.Command(shell, "-l", "-i", "-c",
 		fmt.Sprintf(executionShell, dir, name, socket, name, socket))
 
@@ -395,7 +401,7 @@ func (pool *AppPool) readProxy(name, path string) (*App, error) {
 	}
 
 	app.eventAdd("proxy_created",
-		"destination", fmt.Sprintf("%s://%s"), app.Scheme, app.Address())
+		"destination", fmt.Sprintf("%s://%s", app.Scheme, app.Address()))
 
 	fmt.Printf("* Generated proxy connection for '%s' to %s://%s\n",
 		name, app.Scheme, app.Address())
@@ -460,7 +466,35 @@ func (a *AppPool) App(name string) (*App, error) {
 	destPath, _ := os.Readlink(path)
 
 	if err != nil {
-		if os.IsNotExist(err) {
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+
+		// Check there might be a link there but it's not valid
+		_, err := os.Lstat(path)
+		if err == nil {
+			fmt.Printf("! Bad symlink detected '%s'. Destination '%s' doesn't exist\n", path, destPath)
+			a.Events.Add("bad_symlink", "path", path, "dest", destPath)
+		}
+
+		// If possible, also try expanding - to / to allow for apps in subdirs
+		possible := strings.Replace(name, "-", "/", -1)
+		if possible == name {
+			return nil, ErrUnknownApp
+		}
+
+		path = filepath.Join(a.Dir, possible)
+
+		a.Events.Add("app_lookup", "path", path)
+
+		stat, err = os.Stat(path)
+		destPath, _ = os.Readlink(path)
+
+		if err != nil {
+			if !os.IsNotExist(err) {
+				return nil, err
+			}
+
 			// Check there might be a link there but it's not valid
 			_, err := os.Lstat(path)
 			if err == nil {
@@ -470,8 +504,6 @@ func (a *AppPool) App(name string) (*App, error) {
 
 			return nil, ErrUnknownApp
 		}
-
-		return nil, err
 	}
 
 	canonicalName := name
